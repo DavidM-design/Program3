@@ -49,6 +49,14 @@
          
          // Helper method to display a path
          void displayPath(const vector<string>& path, bool showWeights);
+
+         // Helper method to normalize location names
+         // This method will remove leading and trailing spaces and convert to lowercase
+         string normalizeLocationName(const string& location);
+
+         // Helper method to check if a location exists
+         bool locationExists(const string& location, string& suggestion);
+         
  };
  
  #endif // NAVIGATOR_H

@@ -114,30 +114,36 @@
  
  // Find route between locations
  void Navigator::findRoute(const string& start, const string& end, bool useDijkstra) {
-     // Check if both locations exist
-     if (!graph.getNode(start)) {
-         cerr << "Error: Location '" << start << "' does not exist." << endl;
-         return;
-     }
-     
-     if (!graph.getNode(end)) {
-         cerr << "Error: Location '" << end << "' does not exist." << endl;
-         return;
-     }
-     
-     // Find the path
-     vector<string> path;
-     if (useDijkstra) {
-         cout << "\nFinding route using Dijkstra's algorithm..." << endl;
-         path = pathFinder->findPathDijkstra(start, end);
-     } else {
-         cout << "\nFinding route using BFS algorithm..." << endl;
-         path = pathFinder->findPathBFS(start, end);
-     }
-     
-     // Display the path
-     displayPath(path, useDijkstra);
- }
+    // Normalize location names
+    string normalizedStart = normalizeLocationName(start);
+    string normalizedEnd = normalizeLocationName(end);
+    
+    // Check if both locations exist
+    if (!graph.getNode(normalizedStart)) {
+        cerr << "Error: Location '" << normalizedStart << "' does not exist." << endl;
+        showLocations(); // Show available locations to help the user
+        return;
+    }
+    
+    if (!graph.getNode(normalizedEnd)) {
+        cerr << "Error: Location '" << normalizedEnd << "' does not exist." << endl;
+        showLocations(); // Show available locations to help the user
+        return;
+    }
+    
+    // Find the path
+    vector<string> path;
+    if (useDijkstra) {
+        cout << "\nFinding route using Dijkstra's algorithm..." << endl;
+        path = pathFinder->findPathDijkstra(normalizedStart, normalizedEnd);
+    } else {
+        cout << "\nFinding route using BFS algorithm..." << endl;
+        path = pathFinder->findPathBFS(normalizedStart, normalizedEnd);
+    }
+    
+    // Display the path
+    displayPath(path, useDijkstra);
+}
  
  // Helper method to display a path
  void Navigator::displayPath(const vector<string>& path, bool showWeights) {
@@ -215,26 +221,26 @@
          } else if (command == "locations") {
              showLocations();
          } else if (command == "bfs") {
-             string start, end;
-             cout << "Enter start location: ";
-             getline(cin, start);
-             cout << "Enter end location: ";
-             getline(cin, end);
-             findRoute(start, end, false);
+            string start, end;
+            cout << "Enter start location: ";
+            getline(cin, start);
+            cout << "Enter end location: ";
+            getline(cin, end);
+            findRoute(start, end, false);
          } else if (command == "dijkstra") {
-             string start, end;
-             cout << "Enter start location: ";
-             getline(cin, start);
-             cout << "Enter end location: ";
-             getline(cin, end);
-             findRoute(start, end, true);
+            string start, end;
+            cout << "Enter start location: ";
+            getline(cin, start);
+            cout << "Enter end location: ";
+            getline(cin, end);
+            findRoute(start, end, true);
          } else if (command == "compare") {
-             string start, end;
-             cout << "Enter start location: ";
-             getline(cin, start);
-             cout << "Enter end location: ";
-             getline(cin, end);
-             compareAlgorithms(start, end);
+            string start, end;
+            cout << "Enter start location: ";
+            getline(cin, start);
+            cout << "Enter end location: ";
+            getline(cin, end);
+            compareAlgorithms(start, end);
          } else {
              cout << "Unknown command. Type 'help' for a list of commands." << endl;
          }
@@ -242,3 +248,46 @@
      
      cout << "Thank you for using Middle Earth Navigator. Goodbye!" << endl;
  }
+
+ string Navigator::normalizeLocationName(const string& location) {
+    string normalized = location;
+    
+    // Trim leading whitespace
+    size_t start = normalized.find_first_not_of(" \t\r\n");
+    if (start != string::npos) {
+        normalized = normalized.substr(start);
+    } else {
+        return ""; // All whitespace
+    }
+    
+    // Trim trailing whitespace
+    size_t end = normalized.find_last_not_of(" \t\r\n");
+    if (end != string::npos) {
+        normalized = normalized.substr(0, end + 1);
+    }
+    
+    return normalized;
+}
+
+bool Navigator::locationExists(const string& location, string& suggestion) {
+    string normalizedLocation = normalizeLocationName(location);
+    if (graph.getNode(normalizedLocation)) {
+        return true;
+    }
+    
+    // Location doesn't exist, try to find a similar one
+    vector<string> locations = graph.getAllNodeIds();
+    string closest;
+    int minDistance = INT_MAX;
+    
+    for (const string& loc : locations) {
+        // Simple string comparison - could be improved
+        if (loc.find(normalizedLocation) != string::npos || 
+            normalizedLocation.find(loc) != string::npos) {
+            suggestion = loc;
+            return false;
+        }
+    }
+    
+    return false;
+}
