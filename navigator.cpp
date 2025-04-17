@@ -68,11 +68,12 @@
          string from, to, weightStr;
          
          // Parse the CSV line
-         if (getline(ss, from, ',') && getline(ss, to, ',') && getline(ss, weightStr, ',')) {
+         if (getline(ss, from, ',') && getline(ss, to, ',') && getline(ss, weightStr)) {
              try {
                  int weight = stoi(weightStr);
                  // Add edge to graph
                  graph.addEdge(from, to, weight);
+                 cout << "Loaded edge: " << from << " to " << to << " with weight " << weight << endl;
              } catch (const exception& e) {
                  cerr << "Error parsing weight '" << weightStr << "': " << e.what() << endl;
                  return false;
@@ -89,28 +90,20 @@
  
  // Show available locations
  void Navigator::showLocations() const {
-     vector<string> locations = graph.getAllNodeIds();
-     
-     // Sort locations alphabetically
-     sort(locations.begin(), locations.end());
-     
-     cout << "\nAvailable Locations:" << endl;
-     cout << "-------------------" << endl;
-     
-     int column = 0;
+    vector<string> locations = graph.getAllNodeIds();
+    
+    // Sort locations alphabetically
+    sort(locations.begin(), locations.end());
+    
+    cout << "\nAvailable Locations:" << endl;
+    cout << "-------------------" << endl;
+    
+    // Display each location on its own line
     for (size_t i = 0; i < locations.size(); ++i) {
-        cout << locations[i];
-        column++;
-        
-        // Format into columns
-        if (column % 3 == 0 || i == locations.size() - 1) {
-           cout << endl;
-        } else {
-           cout << "\t";
-        }
+        cout << locations[i] << endl;
     }
     cout << endl;
- }
+}
  
  // Find route between locations
  void Navigator::findRoute(const string& start, const string& end, bool useDijkstra) {
@@ -280,11 +273,11 @@ bool Navigator::locationExists(const string& location, string& suggestion) {
     string closest;
     int minDistance = INT_MAX;
     
-    for (const string& loc : locations) {
+    for (vector<string>::iterator it = locations.begin(); it != locations.end(); ++it) {
         // Simple string comparison - could be improved
-        if (loc.find(normalizedLocation) != string::npos || 
-            normalizedLocation.find(loc) != string::npos) {
-            suggestion = loc;
+        if (it->find(normalizedLocation) != string::npos || 
+            normalizedLocation.find(*it) != string::npos) {
+            suggestion = *it;
             return false;
         }
     }
