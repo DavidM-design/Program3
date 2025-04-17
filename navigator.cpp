@@ -107,20 +107,41 @@
  
  // Find route between locations
  void Navigator::findRoute(const string& start, const string& end, bool useDijkstra) {
-    // Normalize location names
-    string normalizedStart = normalizeLocationName(start);
-    string normalizedEnd = normalizeLocationName(end);
+    // Normalize and convert to lowercase
+    string lowercaseStart = normalizeLocationName(start);
+    transform(lowercaseStart.begin(), lowercaseStart.end(), lowercaseStart.begin(), ::tolower);
+    
+    string lowercaseEnd = normalizeLocationName(end);
+    transform(lowercaseEnd.begin(), lowercaseEnd.end(), lowercaseEnd.begin(), ::tolower);
+    
+    // Find matching locations regardless of case
+    string actualStart = "";
+    string actualEnd = "";
+    
+    vector<string> locations = graph.getAllNodeIds();
+    for (size_t i = 0; i < locations.size(); ++i) {
+        string lowercaseLoc = locations[i];
+        transform(lowercaseLoc.begin(), lowercaseLoc.end(), lowercaseLoc.begin(), ::tolower);
+        
+        if (lowercaseLoc == lowercaseStart) {
+            actualStart = locations[i];
+        }
+        
+        if (lowercaseLoc == lowercaseEnd) {
+            actualEnd = locations[i];
+        }
+    }
     
     // Check if both locations exist
-    if (!graph.getNode(normalizedStart)) {
-        cerr << "Error: Location '" << normalizedStart << "' does not exist." << endl;
-        showLocations(); // Show available locations to help the user
+    if (actualStart.empty()) {
+        cerr << "Error: Location '" << start << "' does not exist." << endl;
+        showLocations();
         return;
     }
     
-    if (!graph.getNode(normalizedEnd)) {
-        cerr << "Error: Location '" << normalizedEnd << "' does not exist." << endl;
-        showLocations(); // Show available locations to help the user
+    if (actualEnd.empty()) {
+        cerr << "Error: Location '" << end << "' does not exist." << endl;
+        showLocations();
         return;
     }
     
@@ -128,10 +149,10 @@
     vector<string> path;
     if (useDijkstra) {
         cout << "\nFinding route using Dijkstra's algorithm..." << endl;
-        path = pathFinder->findPathDijkstra(normalizedStart, normalizedEnd);
+        path = pathFinder->findPathDijkstra(actualStart, actualEnd);
     } else {
         cout << "\nFinding route using BFS algorithm..." << endl;
-        path = pathFinder->findPathBFS(normalizedStart, normalizedEnd);
+        path = pathFinder->findPathBFS(actualStart, actualEnd);
     }
     
     // Display the path
@@ -172,20 +193,43 @@
  
  // Compare algorithms
  void Navigator::compareAlgorithms(const string& start, const string& end) {
-     // Check if both locations exist
-     if (!graph.getNode(start)) {
-         cerr << "Error: Location '" << start << "' does not exist." << endl;
-         return;
-     }
-     
-     if (!graph.getNode(end)) {
-         cerr << "Error: Location '" << end << "' does not exist." << endl;
-         return;
-     }
-     
-     // Compare algorithms
-     pathFinder->compareAlgorithms(start, end);
- }
+    // Create a case-insensitive map of location names
+    map<string, string> locationMap;
+    vector<string> allLocations = graph.getAllNodeIds();
+    
+    for (size_t i = 0; i < allLocations.size(); ++i) {
+        string lowercaseLoc = allLocations[i];
+        transform(lowercaseLoc.begin(), lowercaseLoc.end(), lowercaseLoc.begin(), ::tolower);
+        locationMap[lowercaseLoc] = allLocations[i];
+    }
+    
+    // Convert input to lowercase for lookup
+    string lowercaseStart = normalizeLocationName(start);
+    transform(lowercaseStart.begin(), lowercaseStart.end(), lowercaseStart.begin(), ::tolower);
+    
+    string lowercaseEnd = normalizeLocationName(end);
+    transform(lowercaseEnd.begin(), lowercaseEnd.end(), lowercaseEnd.begin(), ::tolower);
+    
+    // Look up the actual location names with correct case
+    string actualStart = locationMap[lowercaseStart];
+    string actualEnd = locationMap[lowercaseEnd];
+    
+    // Check if both locations exist
+    if (actualStart.empty()) {
+        cerr << "Error: Location '" << start << "' does not exist." << endl;
+        showLocations(); // Show available locations to help the user
+        return;
+    }
+    
+    if (actualEnd.empty()) {
+        cerr << "Error: Location '" << end << "' does not exist." << endl;
+        showLocations(); // Show available locations to help the user
+        return;
+    }
+    
+    // Compare algorithms
+    pathFinder->compareAlgorithms(actualStart, actualEnd);
+}
  
  // Run the navigator interface
  void Navigator::run() {
