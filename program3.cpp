@@ -2,7 +2,7 @@
  * Course: CS316
  * Program 3
  * Purpose: the main function to test the Middle Earth navigator.
- *
+ * Author: David Marquez
  */
 
  #include "navigator.h"

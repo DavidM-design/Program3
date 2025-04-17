@@ -134,7 +134,7 @@
              nodePositions[heap[pos].first] = pos;
              pos = child;
          } else {
-             break; // We're done
+             break;
          }
      }
      

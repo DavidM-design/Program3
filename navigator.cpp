@@ -35,24 +35,26 @@
  
  // Helper method to load vertices
  bool Navigator::loadVertices(const string& filename) {
-     ifstream file(filename);
-     if (!file.is_open()) {
-         cerr << "Error: Could not open file " << filename << endl;
-         return false;
-     }
-     
-     string line;
-     while (getline(file, line)) {
-         // Skip empty lines
-         if (!line.empty()) {
-             // Add node to graph
-             graph.addNode(line);
-         }
-     }
-     
-     file.close();
-     return true;
- }
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filename << endl;
+        return false;
+    }
+    
+    string line;
+    while (getline(file, line)) {
+        // Skip empty lines
+        if (!line.empty()) {
+            // Clean the line to remove hidden characters
+            string cleanLine = normalizeLocationName(line);
+            // Add node to graph
+            graph.addNode(cleanLine);
+        }
+    }
+    
+    file.close();
+    return true;
+}
  
  // Helper method to load edges
  bool Navigator::loadEdges(const string& filename) {
@@ -107,20 +109,24 @@
  
  // Find route between locations
  void Navigator::findRoute(const string& start, const string& end, bool useDijkstra) {
-    // Normalize and convert to lowercase
-    string lowercaseStart = normalizeLocationName(start);
+    // Clean both input locations and convert to lowercase
+    string cleanStart = normalizeLocationName(start);
+    string lowercaseStart = cleanStart;
     transform(lowercaseStart.begin(), lowercaseStart.end(), lowercaseStart.begin(), ::tolower);
     
-    string lowercaseEnd = normalizeLocationName(end);
+    string cleanEnd = normalizeLocationName(end);
+    string lowercaseEnd = cleanEnd;
     transform(lowercaseEnd.begin(), lowercaseEnd.end(), lowercaseEnd.begin(), ::tolower);
     
-    // Find matching locations regardless of case
+    // Find matching locations regardless of case or hidden characters
     string actualStart = "";
     string actualEnd = "";
     
     vector<string> locations = graph.getAllNodeIds();
     for (size_t i = 0; i < locations.size(); ++i) {
-        string lowercaseLoc = locations[i];
+        // Clean the location to remove hidden characters
+        string cleanLoc = normalizeLocationName(locations[i]);
+        string lowercaseLoc = cleanLoc;
         transform(lowercaseLoc.begin(), lowercaseLoc.end(), lowercaseLoc.begin(), ::tolower);
         
         if (lowercaseLoc == lowercaseStart) {
@@ -193,26 +199,34 @@
  
  // Compare algorithms
  void Navigator::compareAlgorithms(const string& start, const string& end) {
-    // Create a case-insensitive map of location names
-    map<string, string> locationMap;
-    vector<string> allLocations = graph.getAllNodeIds();
-    
-    for (size_t i = 0; i < allLocations.size(); ++i) {
-        string lowercaseLoc = allLocations[i];
-        transform(lowercaseLoc.begin(), lowercaseLoc.end(), lowercaseLoc.begin(), ::tolower);
-        locationMap[lowercaseLoc] = allLocations[i];
-    }
-    
-    // Convert input to lowercase for lookup
-    string lowercaseStart = normalizeLocationName(start);
+    // Clean both input locations and convert to lowercase
+    string cleanStart = normalizeLocationName(start);
+    string lowercaseStart = cleanStart;
     transform(lowercaseStart.begin(), lowercaseStart.end(), lowercaseStart.begin(), ::tolower);
     
-    string lowercaseEnd = normalizeLocationName(end);
+    string cleanEnd = normalizeLocationName(end);
+    string lowercaseEnd = cleanEnd;
     transform(lowercaseEnd.begin(), lowercaseEnd.end(), lowercaseEnd.begin(), ::tolower);
     
-    // Look up the actual location names with correct case
-    string actualStart = locationMap[lowercaseStart];
-    string actualEnd = locationMap[lowercaseEnd];
+    // Find matching locations regardless of case or hidden characters
+    string actualStart = "";
+    string actualEnd = "";
+    
+    vector<string> locations = graph.getAllNodeIds();
+    for (size_t i = 0; i < locations.size(); ++i) {
+        // Clean the location to remove hidden characters
+        string cleanLoc = normalizeLocationName(locations[i]);
+        string lowercaseLoc = cleanLoc;
+        transform(lowercaseLoc.begin(), lowercaseLoc.end(), lowercaseLoc.begin(), ::tolower);
+        
+        if (lowercaseLoc == lowercaseStart) {
+            actualStart = locations[i];
+        }
+        
+        if (lowercaseLoc == lowercaseEnd) {
+            actualEnd = locations[i];
+        }
+    }
     
     // Check if both locations exist
     if (actualStart.empty()) {
@@ -229,7 +243,7 @@
     
     // Compare algorithms
     pathFinder->compareAlgorithms(actualStart, actualEnd);
-}
+ }
  
  // Run the navigator interface
  void Navigator::run() {
@@ -289,7 +303,7 @@
  string Navigator::normalizeLocationName(const string& location) {
     string normalized = location;
     
-    // Trim leading whitespace
+    // Trim leading whitespace, carriage returns, and newlines
     size_t start = normalized.find_first_not_of(" \t\r\n");
     if (start != string::npos) {
         normalized = normalized.substr(start);
@@ -297,7 +311,7 @@
         return ""; // All whitespace
     }
     
-    // Trim trailing whitespace
+    // Trim trailing whitespace, carriage returns, and newlines
     size_t end = normalized.find_last_not_of(" \t\r\n");
     if (end != string::npos) {
         normalized = normalized.substr(0, end + 1);
